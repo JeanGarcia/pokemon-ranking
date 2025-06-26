@@ -4,14 +4,18 @@ import com.pokeapi.service.application.PokemonRankingService;
 import com.pokeapi.service.domain.model.Pokemon;
 import com.pokeapi.service.domain.service.PokemonService;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,7 +75,7 @@ public class PokemonRankingServiceTest {
         );
     }
 
-    @ParameterizedTest()
+    @ParameterizedTest(name = "should rank pokemon list by {0} with offset {1} and limit {2}")
     @MethodSource("givenPokemonRankedByStat")
     public void should_rank_pokemon_list_by_stat(
             List<Pokemon> intialPokemonList,
@@ -84,6 +88,93 @@ public class PokemonRankingServiceTest {
 
         // Then
         Assertions.assertEquals(expectedRankedList, rankedList);
+    }
+
+    @Test
+    @DisplayName("should return empty list when pokemon list is null")
+    public void should_return_all_pokemon() {
+        // Given
+        List<Pokemon> expectedPokemonList = POKEMON_LIST;
+        Mockito.when(pokemonService.getAllPokemon()).thenReturn(expectedPokemonList);
+
+        // When
+        List<Pokemon> actualPokemonList = pokemonRankingService.getAllPokemon();
+
+        // Then
+        Assertions.assertEquals(expectedPokemonList, actualPokemonList);
+    }
+
+    @Test
+    @DisplayName("should return null when pokemon list is loading")
+    public void should_return_null_when_pokemon_list_is_loading() throws NoSuchFieldException, IllegalAccessException {
+        // Given
+        // Set isLoadingPokemonList to true
+        Field field = PokemonRankingService.class.getDeclaredField("isLoadingPokemonList");
+        field.setAccessible(true);
+        field.set(pokemonRankingService, true);
+
+        try {
+            // When
+            List<Pokemon> actualPokemonList = pokemonRankingService.getAllPokemon();
+
+            // Then
+            Assertions.assertNull(actualPokemonList);
+        } finally {
+            // Reset isLoadingPokemonList to false
+            field.set(pokemonRankingService, false);
+        }
+    }
+
+    @Test
+    @DisplayName("should throw exception when unable to load Pokémon list")
+    public void should_throw_exception_when_unable_to_load_pokemon_list() {
+        // Given
+        Mockito.when(pokemonService.getAllPokemon()).thenThrow(new RuntimeException("Error"));
+
+        // When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> pokemonRankingService.getAllPokemon());
+        Assertions.assertTrue(exception.getMessage().contains("Error loading Pokémon list"));
+
+    }
+
+    public static Stream<Arguments> givenInvalidStatTypes() {
+        return Stream.of(
+                Arguments.of("invalid_stat_type", "Invalid stat type: invalid_stat_type"),
+                Arguments.of(null, "Invalid stat type: null"),
+                Arguments.of("", "Invalid stat type:")
+        );
+    }
+
+    @ParameterizedTest(name = "should throw exception when stat type is invalid: {0} . With Error Message: {1}")
+    @MethodSource("givenInvalidStatTypes")
+    public void should_throw_exception_when_stat_type_is_invalid(String statType, String errorMessage) {
+        // When & Then
+        IllegalArgumentException blankException = Assertions.assertThrows(IllegalArgumentException.class,
+                () -> pokemonRankingService.rankPokemonListByStat(POKEMON_LIST, statType, 0, 5)
+        );
+        Assertions.assertTrue(blankException.getMessage().contains(errorMessage));
+    }
+
+    public static Stream<Arguments> givenInvalidOffsetAndLimit() {
+        return Stream.of(
+                Arguments.of(-1, 5), // Invalid offset
+                Arguments.of(0, -5), // Invalid limit
+                Arguments.of(10, 5) // Offset greater than list size
+        );
+    }
+
+    @ParameterizedTest(name = "should throw exception when offset or limit is invalid: offset={0}, limit={1}")
+    @MethodSource("givenInvalidOffsetAndLimit")
+    public void should_throw_exception_when_offset_or_limit_is_invalid(int offset, int limit) {
+        // Given
+        String statType = "height";
+
+        // When & Then
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class,
+                () -> pokemonRankingService.rankPokemonListByStat(POKEMON_LIST, statType, offset, limit)
+        );
+        Assertions.assertTrue(exception.getMessage().contains("Invalid offset or limit"));
     }
 
 }

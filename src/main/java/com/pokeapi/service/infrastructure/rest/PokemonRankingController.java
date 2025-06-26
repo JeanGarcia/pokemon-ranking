@@ -32,13 +32,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/pokemon")
-public class PokemonController {
+public class PokemonRankingController {
 
     private static final String STAT_TYPE = "statType";
     private static final String OFFSET = "offset";
     private static final String LIMIT = "limit";
     private final RankingService rankingService;
-    private final PokemonMapper pokemonMapper;
+    private final PokemonRankingMapper pokemonRankingMapper;
 
     @Operation(
             summary = "It retrieves a ranking of Pokémon based on a specified stat type.",
@@ -62,7 +62,7 @@ public class PokemonController {
 
             List<Pokemon> pokemonList = rankingService.getAllPokemon();
             int pokemonCount = pokemonList.size();
-            RankingResponseDto response = pokemonMapper.toRankingResponseDto(
+            RankingResponseDto response = pokemonRankingMapper.toRankingResponseDto(
                     rankingService.rankPokemonListByStat(
                             pokemonList,
                             request.getStatType(),

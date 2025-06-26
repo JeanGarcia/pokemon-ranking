@@ -1,8 +1,8 @@
 package com.pokeapi.service.infrastructure.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * PokemonDto
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * @author Jean
  */
 @Data
-@NoArgsConstructor
+@Builder
 public class PokemonDto {
 
     @JsonProperty("id")
@@ -24,6 +24,9 @@ public class PokemonDto {
 
     @JsonProperty("height")
     private int height;
+
+    @JsonProperty("weight")
+    private int weight;
 
     @JsonProperty("sprite_url")
     private String spriteUrl;

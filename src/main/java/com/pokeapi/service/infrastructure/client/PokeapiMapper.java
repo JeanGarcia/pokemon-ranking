@@ -2,16 +2,15 @@ package com.pokeapi.service.infrastructure.client;
 
 import com.pokeapi.service.domain.model.Pokemon;
 import com.pokeapi.service.infrastructure.client.model.GetPokemonResponse;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
 /**
  * PokeapiMapper
  *
  * @author Jean
  */
-@Mapper
-public interface PokeapiMapper {
+@Component
+public class PokeapiMapper {
 
     /**
      * Converts a GetPokemonResponse (Pokeapi) to a Pokémon model.
@@ -19,13 +18,21 @@ public interface PokeapiMapper {
      * @param getPokemonResponse the response from the PokeAPI
      * @return the converted Pokémon model
      */
-    @Mapping(target = "spriteUrl", expression = "java(getPokemonResponse.getSprites() != null ? " +
-            "getPokemonResponse.getSprites().getFrontDefault() : null)")
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "name", source = "name")
-    @Mapping(target = "height", source = "height")
-    @Mapping(target = "weight", source = "weight")
-    @Mapping(target = "baseExperience", source = "baseExperience")
-    Pokemon toPokemon(GetPokemonResponse getPokemonResponse);
+    public Pokemon toPokemon(GetPokemonResponse getPokemonResponse) {
+        if (getPokemonResponse == null) {
+            return null;
+        }
+        String spriteUrl = getPokemonResponse.getSprites() != null
+                ? getPokemonResponse.getSprites().getFrontDefault()
+                : null;
+        return new Pokemon(
+                getPokemonResponse.getId(),
+                getPokemonResponse.getName(),
+                getPokemonResponse.getHeight(),
+                getPokemonResponse.getWeight(),
+                getPokemonResponse.getBaseExperience(),
+                spriteUrl
+        );
+    }
 
 }

@@ -38,3 +38,5 @@ Clean up, centralize configuration variables in the application properties file,
 Update the application service and rest controller to use webflux async instead of blocking calls.
 
 Create integration tests for the 
+
+Better error handling with custom exceptions and error responses.

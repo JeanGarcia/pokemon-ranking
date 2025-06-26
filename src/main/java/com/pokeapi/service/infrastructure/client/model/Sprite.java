@@ -1,6 +1,7 @@
 package com.pokeapi.service.infrastructure.client.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -9,6 +10,7 @@ import lombok.Data;
  * @author Jean
  */
 @Data
+@Builder
 public class Sprite {
 
     @JsonProperty("front_default")

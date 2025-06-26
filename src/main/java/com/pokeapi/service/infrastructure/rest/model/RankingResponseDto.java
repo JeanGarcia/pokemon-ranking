@@ -1,8 +1,8 @@
 package com.pokeapi.service.infrastructure.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * @author Jean
  */
 @Data
-@NoArgsConstructor
+@Builder
 public class RankingResponseDto {
 
         @JsonProperty("count")
