@@ -22,15 +22,15 @@ public class PokeapiMapper {
         if (getPokemonResponse == null) {
             return null;
         }
-        String spriteUrl = getPokemonResponse.getSprites() != null
-                ? getPokemonResponse.getSprites().getFrontDefault()
+        String spriteUrl = getPokemonResponse.sprites() != null
+                ? getPokemonResponse.sprites().frontDefault()
                 : null;
         return new Pokemon(
-                getPokemonResponse.getId(),
-                getPokemonResponse.getName(),
-                getPokemonResponse.getHeight(),
-                getPokemonResponse.getWeight(),
-                getPokemonResponse.getBaseExperience(),
+                getPokemonResponse.id(),
+                getPokemonResponse.name(),
+                getPokemonResponse.height(),
+                getPokemonResponse.weight(),
+                getPokemonResponse.baseExperience(),
                 spriteUrl
         );
     }

@@ -1,8 +1,6 @@
 package com.pokeapi.service.infrastructure.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
 
 import java.util.List;
 
@@ -11,19 +9,12 @@ import java.util.List;
  *
  * @author Jean
  */
-@Data
-@Builder
-public class RankingResponseDto {
+public record RankingResponseDto(
+        @JsonProperty("count") Integer count,
+        @JsonProperty("next_page") String nextPage,
+        @JsonProperty("previous_page") String previousPage,
+        @JsonProperty("results") List<PokemonDto> results,
+        @JsonProperty("error") String errorMessage
+) {
 
-        @JsonProperty("count")
-        private int count;
-
-        @JsonProperty("next_page")
-        private String nextPage;
-
-        @JsonProperty("previous_page")
-        private String previousPage;
-
-        @JsonProperty("results")
-        private List<PokemonDto> results;
 }

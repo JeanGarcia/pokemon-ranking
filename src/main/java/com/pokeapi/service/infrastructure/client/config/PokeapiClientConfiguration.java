@@ -1,5 +1,6 @@
-package com.pokeapi.service.infrastructure.client;
+package com.pokeapi.service.infrastructure.client.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,11 +12,15 @@ import org.springframework.web.reactive.function.client.WebClient;
  */
 @Configuration
 public class PokeapiClientConfiguration {
+
+    @Value("${pokeapi.client.base-url}")
+    private String baseUrl;
+
     @Bean
     public WebClient webClient() {
         return WebClient.builder()
-                .baseUrl("https://pokeapi.co/api/v2")
-                .codecs(configure -> configure.defaultCodecs().maxInMemorySize(1024 * 1024))
+                .baseUrl(baseUrl)
+                .codecs(configure -> configure.defaultCodecs().maxInMemorySize(1048576))
                 .build();
     }
 }

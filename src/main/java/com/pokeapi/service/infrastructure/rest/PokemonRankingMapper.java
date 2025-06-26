@@ -30,12 +30,27 @@ public class PokemonRankingMapper {
                                                    String nextPage,
                                                    String previousPage) {
         List<PokemonDto> pokemonDtoList = toPokemonDtoList(results);
-        return RankingResponseDto.builder()
-                .results(pokemonDtoList)
-                .count(count)
-                .nextPage(nextPage)
-                .previousPage(previousPage)
-                .build();
+        return new RankingResponseDto(
+                count,
+                nextPage,
+                previousPage,
+                pokemonDtoList,
+                null);
+    }
+
+    /**
+     * Converts an error message into a RankingResponseDto with null results and count.
+     *
+     * @param errorMessage the error message to include in the response
+     * @return a RankingResponseDto with the error message
+     */
+    public RankingResponseDto toRankingResponseDto(String errorMessage) {
+        return new RankingResponseDto(
+                null,
+                null,
+                null,
+                null,
+                errorMessage);
     }
 
     /**
@@ -57,14 +72,13 @@ public class PokemonRankingMapper {
      * @return the converted Pokémon DTO
      */
     public PokemonDto toPokemonDto(Pokemon pokemon) {
-        return PokemonDto.builder()
-                .id(pokemon.id())
-                .name(pokemon.name())
-                .height(pokemon.height())
-                .weight(pokemon.weight())
-                .baseExperience(pokemon.baseExperience())
-                .spriteUrl(pokemon.spriteUrl())
-                .build();
+        return new PokemonDto(
+                pokemon.id(),
+                pokemon.name(),
+                pokemon.baseExperience(),
+                pokemon.height(),
+                pokemon.weight(),
+                pokemon.spriteUrl());
     }
 
 }

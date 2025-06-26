@@ -1,19 +1,14 @@
 package com.pokeapi.service.infrastructure.client.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
 
 /**
  * SpriteResponse
  *
  * @author Jean
  */
-@Data
-@Builder
-public class Sprite {
-
-    @JsonProperty("front_default")
-    private String frontDefault;
+public record Sprite(
+        @JsonProperty("front_default") String frontDefault
+) {
 
 }

@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 
@@ -34,15 +33,13 @@ import java.util.List;
 @RequestMapping("/pokemon")
 public class PokemonRankingController {
 
-    private static final String STAT_TYPE = "statType";
-    private static final String OFFSET = "offset";
-    private static final String LIMIT = "limit";
+    private final ControllerUtils controllerUtils;
     private final RankingService rankingService;
     private final PokemonRankingMapper pokemonRankingMapper;
 
     @Operation(
             summary = "It retrieves a ranking of Pokémon based on a specified stat type.",
-            description = "The stat type can be weight, height, or base experience. The ranking is paginated with offset and limit parameters."
+            description = "The stat type can be weight, height, or base_experience. The ranking is paginated with offset and limit parameters."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "success",
@@ -51,8 +48,6 @@ public class PokemonRankingController {
             @ApiResponse(responseCode = "500", description = "Internal server error",
                     content = {@Content(mediaType = "application/json")}),
             @ApiResponse(responseCode = "400", description = "Bad request",
-                    content = {@Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "404", description = "Not found",
                     content = {@Content(mediaType = "application/json")})
     })
     @GetMapping(value = "/ranking", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -60,46 +55,34 @@ public class PokemonRankingController {
         try {
             log.debug("[GET-RANKING] request received: {}", request);
 
-            List<Pokemon> pokemonList = rankingService.getAllPokemon();
-            int pokemonCount = pokemonList.size();
+            final List<Pokemon> pokemonList = rankingService.getAllPokemon();
+            final int pokemonCount = pokemonList.size();
+
             RankingResponseDto response = pokemonRankingMapper.toRankingResponseDto(
                     rankingService.rankPokemonListByStat(
                             pokemonList,
-                            request.getStatType(),
-                            request.getOffset(),
-                            request.getLimit()),
+                            request.statType(),
+                            request.offset(),
+                            request.limit()),
                     pokemonCount,
-                    buildNextLink(request),
-                    buildPreviousLink(request)
+                    controllerUtils.buildRankingNextLink(request, pokemonCount),
+                    controllerUtils.buildRankingPreviousLink(request)
             );
 
             return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Invalid Request: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(
+                    pokemonRankingMapper.toRankingResponseDto(e.getMessage())
+            );
+        }
+        catch (Exception e) {
             log.error("Error getting ranking", e);
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(
+                    pokemonRankingMapper.toRankingResponseDto(e.getMessage())
+            );
         }
-    }
-
-    private String buildNextLink(RankingRequestDto request) {
-        int nextOffset = request.getOffset() + request.getLimit();
-        return ServletUriComponentsBuilder.fromCurrentRequestUri()
-                .replaceQueryParam(STAT_TYPE, request.getStatType())
-                .replaceQueryParam(OFFSET, nextOffset)
-                .replaceQueryParam(LIMIT, request.getLimit())
-                .toUriString();
-    }
-
-    private String buildPreviousLink(RankingRequestDto request) {
-        int nextOffset = request.getOffset() - request.getLimit();
-        if (nextOffset < 0) {
-            return null; // There's no previous page
-        }
-        return ServletUriComponentsBuilder.fromCurrentRequestUri()
-                .replaceQueryParam(STAT_TYPE, request.getStatType())
-                .replaceQueryParam(OFFSET, nextOffset)
-                .replaceQueryParam(LIMIT, request.getLimit())
-                .toUriString();
     }
 
 }

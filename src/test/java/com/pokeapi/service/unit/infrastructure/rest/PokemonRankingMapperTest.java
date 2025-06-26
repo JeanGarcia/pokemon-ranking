@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 /**
- * PokeapiMapperTest
+ * PokemonRankingMapperTest
  *
  * @author Jean
  */
@@ -43,10 +43,27 @@ public class PokemonRankingMapperTest {
         RankingResponseDto rankingResponseDto = pokemonRankingMapper.toRankingResponseDto(POKEMON_LIST, count, nextPage, previousPage);
 
         // Then
-        Assertions.assertEquals(POKEMON_LIST.size(), rankingResponseDto.getResults().size());
-        Assertions.assertEquals(count, rankingResponseDto.getCount());
-        Assertions.assertEquals(nextPage, rankingResponseDto.getNextPage());
-        Assertions.assertEquals(previousPage, rankingResponseDto.getPreviousPage());
+        Assertions.assertEquals(POKEMON_LIST.size(), rankingResponseDto.results().size());
+        Assertions.assertEquals(count, rankingResponseDto.count());
+        Assertions.assertEquals(nextPage, rankingResponseDto.nextPage());
+        Assertions.assertEquals(previousPage, rankingResponseDto.previousPage());
+    }
+
+    @Test
+    @DisplayName("should map to ranking response dto with error message")
+    public void should_map_to_ranking_response_dto_with_error_message() {
+        // Given
+        final String errorMessage = "An error occurred while fetching the ranking";
+
+        // When
+        RankingResponseDto rankingResponseDto = pokemonRankingMapper.toRankingResponseDto(errorMessage);
+
+        // Then
+        Assertions.assertNull(rankingResponseDto.results());
+        Assertions.assertNull(rankingResponseDto.count());
+        Assertions.assertNull(rankingResponseDto.nextPage());
+        Assertions.assertNull(rankingResponseDto.previousPage());
+        Assertions.assertEquals(errorMessage, rankingResponseDto.errorMessage());
     }
 
     @Test
@@ -69,11 +86,11 @@ public class PokemonRankingMapperTest {
         PokemonDto pokemonDto = pokemonRankingMapper.toPokemonDto(pokemon);
 
         // Then
-        Assertions.assertEquals(pokemon.id(), pokemonDto.getId());
-        Assertions.assertEquals(pokemon.name(), pokemonDto.getName());
-        Assertions.assertEquals(pokemon.height(), pokemonDto.getHeight());
-        Assertions.assertEquals(pokemon.weight(), pokemonDto.getWeight());
-        Assertions.assertEquals(pokemon.baseExperience(), pokemonDto.getBaseExperience());
-        Assertions.assertEquals(pokemon.spriteUrl(), pokemonDto.getSpriteUrl());
+        Assertions.assertEquals(pokemon.id(), pokemonDto.id());
+        Assertions.assertEquals(pokemon.name(), pokemonDto.name());
+        Assertions.assertEquals(pokemon.height(), pokemonDto.height());
+        Assertions.assertEquals(pokemon.weight(), pokemonDto.weight());
+        Assertions.assertEquals(pokemon.baseExperience(), pokemonDto.baseExperience());
+        Assertions.assertEquals(pokemon.spriteUrl(), pokemonDto.spriteUrl());
     }
 }

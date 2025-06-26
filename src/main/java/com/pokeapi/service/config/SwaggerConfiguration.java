@@ -2,6 +2,7 @@ package com.pokeapi.service.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -12,12 +13,21 @@ import org.springframework.context.annotation.Bean;
  */
 public class SwaggerConfiguration {
 
+    @Value("${application.title}")
+    private String appTitle;
+
+    @Value("${application.description}")
+    private String appDescription;
+
+    @Value("${application.version}")
+    private String appVersion;
+
     @Bean
     public OpenAPI pokeapiServiceOpenAPI() {
-        return new OpenAPI() 
-            .info(new Info().title("Pokemon Ranking API")
-            .description("A Pokemon ranking API that allows you to rank Pokémon based on various stats such as base experience, weight, and height.")
-            .version("0.0.1"));
+        return new OpenAPI()
+                .info(new Info().title(appTitle)
+                        .description(appDescription)
+                        .version(appVersion));
     }
-    
+
 }

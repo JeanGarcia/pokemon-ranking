@@ -1,7 +1,6 @@
 package com.pokeapi.service.infrastructure.client.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
 
 import java.util.List;
 
@@ -10,19 +9,11 @@ import java.util.List;
  *
  * @author Jean
  */
-@Data
-public class GetAllPokemonResponse {
-
-    @JsonProperty("count")
-    private int count;
-
-    @JsonProperty("next")
-    private String next;
-
-    @JsonProperty("previous")
-    private String previous;
-
-    @JsonProperty("results")
-    private List<ResultItem> results;
+public record GetAllPokemonResponse(
+        @JsonProperty("count") int count,
+        @JsonProperty("next") String next,
+        @JsonProperty("previous") String previous,
+        @JsonProperty("results") List<ResultItem> results
+) {
 
 }

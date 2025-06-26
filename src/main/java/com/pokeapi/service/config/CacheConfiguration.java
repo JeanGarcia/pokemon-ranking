@@ -1,7 +1,7 @@
 package com.pokeapi.service.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.EnableCaching;
@@ -22,8 +22,10 @@ import java.util.List;
 @EnableCaching
 @EnableScheduling
 @Slf4j
-@ConfigurationProperties(prefix = "pokeapi.max-limit")
 public class CacheConfiguration {
+
+    @Value("${application.cache.fixed-delay:31104000000}")
+    private Long fixedDelay;
 
     @Bean
     public CacheManager cacheManager() {
@@ -36,10 +38,9 @@ public class CacheConfiguration {
     }
 
     @CacheEvict(value = "pokemonList", allEntries = true)
-    @Scheduled(fixedDelay = 604800000)
+    @Scheduled(fixedDelayString = "${application.cache.fixed-delay:31104000000}")
     public void clearCache() {
-        // This method will be called every week to clear the cache
-        log.info("Pokemon list cleared successfully");
+        log.info("Pokemon list cache cleared successfully, next clear in ms {} ms", fixedDelay);
     }
 
 }

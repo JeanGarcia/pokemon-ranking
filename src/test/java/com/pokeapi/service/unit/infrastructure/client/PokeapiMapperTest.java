@@ -26,27 +26,19 @@ public class PokeapiMapperTest {
     @DisplayName("should map GetPokemonResponse to Pokemon")
     public void should_map_to_Pokemon() {
         // Given
-        GetPokemonResponse getPokemonResponse = GetPokemonResponse.builder()
-                .id(25)
-                .name("pikachu")
-                .height(4)
-                .weight(60)
-                .baseExperience(112)
-                .sprites(Sprite.builder()
-                        .frontDefault("front_default.png")
-                        .build()
-                )
-                .build();
+
+        GetPokemonResponse getPokemonResponse = new GetPokemonResponse(25, "pikachu", 4, 60, 112,
+                new Sprite("front_default.png"));
 
         // When
         Pokemon pokemon = pokeapiMapper.toPokemon(getPokemonResponse);
 
         // Then
-        Assertions.assertEquals(getPokemonResponse.getName(), pokemon.name());
-        Assertions.assertEquals(getPokemonResponse.getId(), pokemon.id());
-        Assertions.assertEquals(getPokemonResponse.getWeight(), pokemon.weight());
-        Assertions.assertEquals(getPokemonResponse.getHeight(), pokemon.height());
-        Assertions.assertEquals(getPokemonResponse.getBaseExperience(), pokemon.baseExperience());
-        Assertions.assertEquals(getPokemonResponse.getSprites().getFrontDefault(), pokemon.spriteUrl());
+        Assertions.assertEquals(getPokemonResponse.name(), pokemon.name());
+        Assertions.assertEquals(getPokemonResponse.id(), pokemon.id());
+        Assertions.assertEquals(getPokemonResponse.weight(), pokemon.weight());
+        Assertions.assertEquals(getPokemonResponse.height(), pokemon.height());
+        Assertions.assertEquals(getPokemonResponse.baseExperience(), pokemon.baseExperience());
+        Assertions.assertEquals(getPokemonResponse.sprites().frontDefault(), pokemon.spriteUrl());
     }
 }

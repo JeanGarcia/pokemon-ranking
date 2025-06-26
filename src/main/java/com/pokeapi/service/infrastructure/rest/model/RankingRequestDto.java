@@ -4,30 +4,32 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Builder;
-import lombok.Data;
 
 /**
  * RankingRequestDto
  *
  * @author Jean
  */
-@Builder
-@Data
-public class RankingRequestDto {
-
+public record RankingRequestDto(
         @JsonProperty("stat_type")
         @NotBlank(message = "Stat type cannot be blank")
-        private String statType;
+        String statType,
 
         @JsonProperty("offset")
-        @Builder.Default
         @PositiveOrZero(message = "offset must be a positive number or zero")
-        private int offset = 0;
+        Integer offset,
 
         @JsonProperty("limit")
-        @Builder.Default
         @Positive(message = "limit must be a positive number")
-        private int limit = 20;
-
+        Integer limit
+) {
+    public RankingRequestDto {
+        // Default values for offset and limit
+        if (offset == null) {
+            offset = 0;
+        }
+        if (limit == null) {
+            limit = 5;
+        }
+    }
 }
