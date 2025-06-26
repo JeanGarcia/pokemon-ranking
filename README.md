@@ -24,6 +24,9 @@ Optional steps:
 ___
 1. Use the Gradle task `./gradlew test` to run the test suit and generate the jacoco report at `build/reports/jacoco/test/html/index.html`.
 
+Last Jacoco report: 
+![img.png](jacoco_report.png)
+
 # Justification
 ___
 It has been implemented using a hexagonal architecture, which allows for easy testing and separation of concerns. 
