@@ -54,7 +54,9 @@ Clean up, centralize configuration variables in the application properties file,
 
 Update the application service and rest controller to use webflux async instead of blocking calls.
 
-I would like to have a logic similar to: if the cache is empty, then a specific error like "loading Pokémon in progress" is returned why there is a background task loading the data into the cache.
+I would like to have a logic similar to: 
+if the cache is empty, then a specific error like "loading Pokémon in progress" is returned why there is a background task loading the data into the cache.
+Also, after testing a deployed version in GCP I would likely prefer to use an external cache or directly use a bucket to store the Pokémon data to avoid the deletion of the cache after the service/pod is down.
 
 Improve error handling with custom exceptions and error responses.
 
