@@ -1,4 +1,4 @@
-package com.pokeapi.service.infrastructure.client.config;
+package com.pokeapi.service.infrastructure.client.pokeapi.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

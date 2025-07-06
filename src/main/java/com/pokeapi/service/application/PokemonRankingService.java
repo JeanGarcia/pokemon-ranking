@@ -1,38 +1,41 @@
 package com.pokeapi.service.application;
 
+import com.pokeapi.service.domain.exception.InvalidArgumentException;
+import com.pokeapi.service.domain.exception.NoPokemonException;
+import com.pokeapi.service.domain.exception.PokemonSyncFailedException;
 import com.pokeapi.service.domain.model.Pokemon;
 import com.pokeapi.service.domain.model.StatType;
-import com.pokeapi.service.domain.service.PokemonService;
-import com.pokeapi.service.domain.service.RankingService;
+import com.pokeapi.service.domain.service.PokemonFetcher;
+import com.pokeapi.service.domain.service.PokemonNotification;
+import com.pokeapi.service.domain.service.PokemonRanker;
+import com.pokeapi.service.domain.service.PokemonStorage;
+import com.pokeapi.service.domain.service.PokemonSyncer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * PokemonService
+ * PokemonRankingService
  *
  * @author Jean
  */
 @RequiredArgsConstructor
 @Service
 @Slf4j
-public class PokemonRankingService implements RankingService {
+public class PokemonRankingService implements PokemonRanker, PokemonSyncer {
 
     private static final String INVALID_STAT_TYPE_ERROR_MSG = "Invalid stat type: ";
-    private final PokemonService pokemonService;
-    private volatile boolean isLoadingPokemonList;
+    public static final String POKEMON_LIST_EMPTY_MSG = "Pokémon list is empty try loading the Pokemon list first";
 
-    /**
-     * Get a ranking of Pokémon by a specific stat type.
-     *
-     * @param statType the type of stat to rank by (e.g., "weight", "height", "base_experience")
-     * @param offset   the starting index for pagination
-     * @param limit    the maximum number of Pokémon to return
-     * @return a list of Pokémon ranked by the specified stat type, paginated by offset and limit.
-     */
+    private final PokemonStorage pokemonStorage;
+    private final PokemonFetcher pokemonFetcher;
+    private final PokemonNotification pokemonNotification;
+
+
     @Override
     public List<Pokemon> rankPokemonListByStat(List<Pokemon> pokemonList, String statType, int offset, int limit) {
         if (pokemonList == null) {
@@ -45,32 +48,63 @@ public class PokemonRankingService implements RankingService {
 
         // Ensure the offset and limit are within bounds
         int end = Math.min(offset + limit, pokemonList.size());
-        return pokemonList.subList(offset, end);
+        return new ArrayList<>(pokemonList.subList(offset, end));
     }
 
-    /**
-     * Retrieves all Pokémon from the external service and caches the result.
-     * If the Pokémon list is currently being loaded, it returns null to avoid caching an incomplete list.
-     *
-     * @return a list of all Pokémon
-     */
-    @Cacheable("pokemonList")
     @Override
     public List<Pokemon> getAllPokemon() {
-        log.info("Cache missed, fetching all Pokémon from external service");
-        if (isLoadingPokemonList) {
-            log.warn("Pokémon list is currently loading, returning null to avoid caching");
-            return null;
+        List<Pokemon> pokemonList = pokemonStorage.retrievePokemonList();
+
+        if (pokemonList.isEmpty()) {
+            log.warn(POKEMON_LIST_EMPTY_MSG);
+            throw new NoPokemonException(POKEMON_LIST_EMPTY_MSG);
         }
-        isLoadingPokemonList = true;
+        return pokemonList;
+    }
+
+    @Override
+    public void syncAllPokemon(String targetEndpoint) {
         try {
-            return pokemonService.getAllPokemon();
+            final List<String> pokemonIds = pokemonFetcher.getAllPokemonIds();
+            final List<String> existingPokemonIds = pokemonStorage.retrievePokemonList()
+                    .stream()
+                    .map(Pokemon::getId)
+                    .map(String::valueOf)
+                    .toList();
+            List<String> nonExistingPokemonIds = removePokemonIdsFromList(pokemonIds, existingPokemonIds);
+            log.info("The Pokémon ids ready to be synced: {}", nonExistingPokemonIds);
+            pokemonNotification.sendPokemonSyncNotificationBulk(nonExistingPokemonIds, targetEndpoint);
         } catch (Exception e) {
-            log.error("Error loading Pokémon list: {}", e.getMessage(), e);
-            throw new RuntimeException("Error loading Pokémon list: ", e);
-        } finally {
-            isLoadingPokemonList = false;
+            log.error("Error syncing Pokémon data: ", e);
+            throw new PokemonSyncFailedException("Error syncing Pokémon data: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void syncPokemonById(String pokemonId) {
+        try {
+            final Optional<Pokemon> existingPokemonList = pokemonStorage.retrievePokemon(pokemonId);
+
+            if (existingPokemonList.isPresent()) {
+                log.info("Pokémon with ID {} is already stored, skipping sync.", pokemonId);
+                return;
+            }
+
+            final Pokemon pokemon = pokemonFetcher.getPokemonById(pokemonId);
+            if (pokemon != null) {
+                log.info("Saving Pokémon with ID {}", pokemonId);
+                pokemonStorage.savePokemon(pokemon);
+            }
+        } catch (Exception e) {
+            log.error("Error syncing Pokémon with ID {}", pokemonId, e);
+            throw new PokemonSyncFailedException("Error syncing Pokémon with ID " + pokemonId + e.getMessage(), e);
+        }
+    }
+
+    private List<String> removePokemonIdsFromList(List<String> pokemonIds, List<String> existingPokemonIds) {
+        return pokemonIds.stream()
+                .filter(id -> !existingPokemonIds.contains(id))
+                .toList();
     }
 
     /**
@@ -83,9 +117,9 @@ public class PokemonRankingService implements RankingService {
     private static void sortPokemonListByStatType(StatType statType, List<Pokemon> pokemonList) {
         pokemonList.sort(
                 (p1, p2) -> switch (statType) {
-                    case StatType.WEIGHT -> Integer.compare(p2.weight(), p1.weight());
-                    case StatType.HEIGHT -> Integer.compare(p2.height(), p1.height());
-                    case StatType.BASE_EXPERIENCE -> Integer.compare(p2.baseExperience(), p1.baseExperience());
+                    case StatType.WEIGHT -> Integer.compare(p2.getWeight(), p1.getWeight());
+                    case StatType.HEIGHT -> Integer.compare(p2.getHeight(), p1.getHeight());
+                    case StatType.BASE_EXPERIENCE -> Integer.compare(p2.getBaseExperience(), p1.getBaseExperience());
                 });
     }
 
@@ -94,16 +128,16 @@ public class PokemonRankingService implements RankingService {
      *
      * @param statType the stat type as a string
      * @return the corresponding StatType enum
-     * @throws IllegalArgumentException if the stat type is null, blank, or invalid
+     * @throws InvalidArgumentException if the stat type is null, blank, or invalid
      */
     private static StatType validateAndReturnStatType(String statType) {
         if (statType == null || statType.isBlank()) {
-            throw new IllegalArgumentException(INVALID_STAT_TYPE_ERROR_MSG + statType);
+            throw new InvalidArgumentException(INVALID_STAT_TYPE_ERROR_MSG + statType);
         }
         try {
             return StatType.valueOf(statType.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(INVALID_STAT_TYPE_ERROR_MSG + statType);
+            throw new InvalidArgumentException(INVALID_STAT_TYPE_ERROR_MSG + statType);
         }
     }
 
@@ -113,11 +147,11 @@ public class PokemonRankingService implements RankingService {
      * @param offset the starting index for pagination
      * @param limit  the maximum number of Pokémon to return
      * @param size   the total size of the Pokémon list
-     * @throws IllegalArgumentException if the offset or limit is invalid
+     * @throws InvalidArgumentException if the offset or limit is invalid
      */
     private static void validateOffsetAndLimit(int offset, int limit, int size) {
         if (offset < 0 || limit <= 0 || offset >= size) {
-            throw new IllegalArgumentException("Invalid offset or limit");
+            throw new InvalidArgumentException("Invalid offset or limit");
         }
     }
 

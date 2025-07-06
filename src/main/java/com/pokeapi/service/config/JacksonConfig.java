@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * JacksonConfig
  * Specifications for the jackson configuration.
+ *
  * @author Jean
  */
 @Configuration

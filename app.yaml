@@ -1,2 +1,6 @@
 runtime: java21
 service: pokemon-ranking
+
+# You might need to create this file taking as a reference the sample file env_variables_sample.yaml
+includes:
+  - env_variables.yaml

@@ -1,4 +1,4 @@
-package com.pokeapi.service.infrastructure.client.model;
+package com.pokeapi.service.infrastructure.client.pokeapi.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

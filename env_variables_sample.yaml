@@ -1,0 +1,10 @@
+# Use a similar file to set environment variables for your application.
+# Change the name to env_variables.yaml and set the values accordingly.
+
+env_variables:
+  # GCP properties
+  GCP_PROJECT_ID: "project-id"
+  GCP_FIRESTORE_COLLECTION_NAME: "collection-name"
+  GCP_PUB_SUB_TOPIC_NAME: "topic-name"
+  GCP_TASK_QUEUE_NAME: "quote-name"
+  GCP_TASK_QUEUE_LOCATION: "us-central1"

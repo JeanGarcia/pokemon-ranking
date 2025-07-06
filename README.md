@@ -19,6 +19,10 @@ ___
 
 Optional steps:
 3. Update the properties `pokeapi.max-limit` and `cache.fixed-delay` to extend the number of Pokémon to retrieve and the cache expiration respectively.
+4. By default the loading of the Pokemon data will use a local file as the source data. If you want to use the GCP bucket you'll need login with gcloud in order to use ADC and set the properties: 
+   - `gcp.storage.bucket.name` to the name of the bucket.
+   - `gcp.storage.file.reference` Path and name of the file in the bucket.
+
 
 # Testing
 ___
@@ -26,6 +30,10 @@ ___
 
 Last Jacoco report: 
 ![img.png](jacoco_report.png)
+
+# Deploy to GCP
+1. Authenticate through gcloud `gcloud auth application-default login`.
+2. Deploy any changes `gcloud app deploy`
 
 # Justification
 ___
@@ -50,15 +58,7 @@ but it can be extended by changing the `pokeapi.max-limit` property in the appli
 
 # Improvements 
 ___
-Clean up, centralize configuration variables in the application properties file, and externalize those as environment variables.
 
 Update the application service and rest controller to use webflux async instead of blocking calls.
-
-I would like to have a logic similar to: 
-if the cache is empty, then a specific error like "loading Pokémon in progress" is returned why there is a background task loading the data into the cache.
-Also, after testing a deployed version in GCP I would likely prefer to use an external cache or directly use a bucket to store the Pokémon data to avoid the deletion of the cache after the service/pod is down.
-
-Improve error handling with custom exceptions and error responses.
-
 
 [1]: https://pokemon-ranking-dot-mayeru.oa.r.appspot.com/swagger-ui/index.html
