@@ -1,11 +1,10 @@
-package com.pokeapi.service.integration.infrastructure.client;
+package com.pokeapi.service.integration.infrastructure.client.pokeapi;
 
-import com.pokeapi.service.domain.model.Pokemon;
-import com.pokeapi.service.infrastructure.client.PokeapiService;
-import com.pokeapi.service.infrastructure.client.model.GetAllPokemonResponse;
-import com.pokeapi.service.infrastructure.client.model.GetPokemonResponse;
-import com.pokeapi.service.infrastructure.client.model.ResultItem;
-import com.pokeapi.service.infrastructure.client.model.Sprite;
+import com.pokeapi.service.infrastructure.client.pokeapi.PokeapiService;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.GetAllPokemonResponse;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.GetPokemonResponse;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.ResultItem;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.Sprite;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,17 +31,10 @@ public class PokeapiServiceTest {
     @DisplayName("should return a list with all Pokémon detailed")
     void should_return_a_list_with_all_pokemon_detailed() {
         // Given
-        final List<Pokemon> expectedPokemonList = List.of(
-                new Pokemon(1, "bulbasaur", 7, 69, 64,
-                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png"),
-                new Pokemon(2, "ivysaur", 10, 130, 142,
-                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/2.png"),
-                new Pokemon(3, "venusaur", 20, 1000, 236,
-                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/3.png")
-        );
+        final List<String> expectedPokemonList = List.of("1", "2", "3");
 
         // When
-        List<Pokemon> resultPokemonList = pokeapiService.getAllPokemon();
+        List<String> resultPokemonList = pokeapiService.getAllPokemonIds();
 
         // Then
         Assertions.assertNotNull(resultPokemonList);

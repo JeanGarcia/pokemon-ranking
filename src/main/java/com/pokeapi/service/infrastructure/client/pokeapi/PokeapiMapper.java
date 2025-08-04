@@ -1,7 +1,7 @@
-package com.pokeapi.service.infrastructure.client;
+package com.pokeapi.service.infrastructure.client.pokeapi;
 
 import com.pokeapi.service.domain.model.Pokemon;
-import com.pokeapi.service.infrastructure.client.model.GetPokemonResponse;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.GetPokemonResponse;
 import org.springframework.stereotype.Component;
 
 /**

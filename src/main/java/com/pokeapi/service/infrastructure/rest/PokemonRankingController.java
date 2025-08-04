@@ -1,7 +1,7 @@
 package com.pokeapi.service.infrastructure.rest;
 
 import com.pokeapi.service.domain.model.Pokemon;
-import com.pokeapi.service.domain.service.RankingService;
+import com.pokeapi.service.domain.service.PokemonRanker;
 import com.pokeapi.service.infrastructure.rest.model.RankingRequestDto;
 import com.pokeapi.service.infrastructure.rest.model.RankingResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,8 +34,9 @@ import java.util.List;
 public class PokemonRankingController {
 
     private final ControllerUtils controllerUtils;
-    private final RankingService rankingService;
+    private final PokemonRanker pokemonRanker;
     private final PokemonRankingMapper pokemonRankingMapper;
+
 
     @Operation(
             summary = "It retrieves a ranking of Pokémon based on a specified stat type.",
@@ -52,37 +53,23 @@ public class PokemonRankingController {
     })
     @GetMapping(value = "/ranking", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RankingResponseDto> getRanking(@Valid @ParameterObject @ModelAttribute RankingRequestDto request) {
-        try {
-            log.debug("[GET-RANKING] request received: {}", request);
+        log.info("[GET-RANKING] request received: {}", request);
 
-            final List<Pokemon> pokemonList = rankingService.getAllPokemon();
-            final int pokemonCount = pokemonList.size();
+        final List<Pokemon> pokemonList = pokemonRanker.getAllPokemon();
+        final int pokemonCount = pokemonList.size();
 
-            RankingResponseDto response = pokemonRankingMapper.toRankingResponseDto(
-                    rankingService.rankPokemonListByStat(
-                            pokemonList,
-                            request.statType(),
-                            request.offset(),
-                            request.limit()),
-                    pokemonCount,
-                    controllerUtils.buildRankingNextLink(request, pokemonCount),
-                    controllerUtils.buildRankingPreviousLink(request)
-            );
+        RankingResponseDto response = pokemonRankingMapper.toRankingResponseDto(
+                pokemonRanker.rankPokemonListByStat(
+                        pokemonList,
+                        request.statType(),
+                        request.offset(),
+                        request.limit()),
+                pokemonCount,
+                controllerUtils.buildRankingNextLink(request, pokemonCount),
+                controllerUtils.buildRankingPreviousLink(request)
+        );
 
-            return ResponseEntity.ok(response);
-        }
-        catch (IllegalArgumentException e) {
-            log.error("Invalid Request: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(
-                    pokemonRankingMapper.toRankingResponseDto(e.getMessage())
-            );
-        }
-        catch (Exception e) {
-            log.error("Error getting ranking", e);
-            return ResponseEntity.internalServerError().body(
-                    pokemonRankingMapper.toRankingResponseDto(e.getMessage())
-            );
-        }
+        return ResponseEntity.ok(response);
     }
 
 }

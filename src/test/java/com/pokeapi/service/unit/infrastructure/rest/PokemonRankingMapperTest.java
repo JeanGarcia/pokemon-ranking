@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * @author Jean
  */
 @SpringBootTest
+@ActiveProfiles("test")
 public class PokemonRankingMapperTest {
 
     @Autowired
@@ -86,11 +88,11 @@ public class PokemonRankingMapperTest {
         PokemonDto pokemonDto = pokemonRankingMapper.toPokemonDto(pokemon);
 
         // Then
-        Assertions.assertEquals(pokemon.id(), pokemonDto.id());
-        Assertions.assertEquals(pokemon.name(), pokemonDto.name());
-        Assertions.assertEquals(pokemon.height(), pokemonDto.height());
-        Assertions.assertEquals(pokemon.weight(), pokemonDto.weight());
-        Assertions.assertEquals(pokemon.baseExperience(), pokemonDto.baseExperience());
-        Assertions.assertEquals(pokemon.spriteUrl(), pokemonDto.spriteUrl());
+        Assertions.assertEquals(pokemon.getId(), pokemonDto.id());
+        Assertions.assertEquals(pokemon.getName(), pokemonDto.name());
+        Assertions.assertEquals(pokemon.getHeight(), pokemonDto.height());
+        Assertions.assertEquals(pokemon.getWeight(), pokemonDto.weight());
+        Assertions.assertEquals(pokemon.getBaseExperience(), pokemonDto.baseExperience());
+        Assertions.assertEquals(pokemon.getSpriteUrl(), pokemonDto.spriteUrl());
     }
 }

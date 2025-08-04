@@ -1,29 +1,31 @@
 package com.pokeapi.service.integration.infrastructure.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pokeapi.service.application.PokemonRankingService;
 import com.pokeapi.service.domain.model.Pokemon;
-import com.pokeapi.service.domain.service.PokemonService;
-import com.pokeapi.service.infrastructure.rest.ControllerUtils;
-import com.pokeapi.service.infrastructure.rest.PokemonRankingController;
-import com.pokeapi.service.infrastructure.rest.PokemonRankingMapper;
+import com.pokeapi.service.domain.service.PokemonFetcher;
+import com.pokeapi.service.domain.service.PokemonNotification;
+import com.pokeapi.service.domain.service.PokemonStorage;
+import com.pokeapi.service.infrastructure.rest.model.ErrorResponseDto;
 import com.pokeapi.service.infrastructure.rest.model.PokemonDto;
 import com.pokeapi.service.infrastructure.rest.model.RankingResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,16 +36,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Jean
  */
 
-@WebMvcTest(PokemonRankingController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({ControllerUtils.class, PokemonRankingMapper.class, PokemonRankingService.class})
 public class PokemonRankingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private PokemonService pokemonService;
+    @MockitoBean
+    private PokemonFetcher pokemonFetcher;
+
+    @MockitoBean
+    private PokemonStorage pokemonStorage;
+
+    @MockitoBean
+    private PokemonNotification pokemonNotification;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -72,7 +80,7 @@ public class PokemonRankingControllerTest {
                 null
         );
 
-        Mockito.when(pokemonService.getAllPokemon()).thenReturn(pokemonList);
+        Mockito.when(pokemonStorage.retrievePokemonList()).thenReturn(pokemonList);
 
         // When/Then
         mockMvc.perform(get("/pokemon/ranking")
@@ -88,34 +96,72 @@ public class PokemonRankingControllerTest {
     @DisplayName("should return 400 for invalid stat type")
     void should_return_bad_request_for_invalid_stat_type() throws Exception {
         // Given
-        final String errorMsg = "Invalid stat type: invalid";
-        final RankingResponseDto expectedResponse = new RankingResponseDto(null, null, null, null, errorMsg);
+        final List<Pokemon> pokemonList = Stream.of(
+                new Pokemon(1, "bulbasaur", 7, 69, 64, "/1.png"),
+                new Pokemon(2, "ivysaur", 10, 130, 142, "/2.png"),
+                new Pokemon(3, "venusaur", 20, 1000, 236, "/3.png"),
+                new Pokemon(4, "charmander", 6, 85, 62, "/4.png"),
+                new Pokemon(5, "charmeleon", 11, 190, 142, "/5.png")
+        ).collect(Collectors.toList());
+        final ErrorResponseDto errorResponse = new ErrorResponseDto(
+                "2025-08-04T20:26:52.691496400Z",
+                400,
+                "Bad Request",
+                "Invalid stat type: invalid",
+                "/pokemon/ranking"
+        );
+        Mockito.when(pokemonStorage.retrievePokemonList()).thenReturn(pokemonList);
 
-        mockMvc.perform(get("/pokemon/ranking")
+        // When
+        String responseJson = mockMvc.perform(get("/pokemon/ranking")
                         .param("statType", "invalid")
                         .param("offset", "0")
                         .param("limit", "10")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().json(objectMapper.writeValueAsString(expectedResponse)));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Then
+        var node = objectMapper.readTree(responseJson);
+        assertEquals(errorResponse.path(), node.get("path").asText());
+        assertEquals(errorResponse.status(), node.get("status").asInt());
+        assertEquals(errorResponse.error(), node.get("error").asText());
+        assertEquals(errorResponse.message(), node.get("message").asText());
+        assertDoesNotThrow(() -> java.time.Instant.parse(node.get("timestamp").asText()));
     }
 
     @Test
-    @DisplayName("should return 500 for internal error")
-    void should_return_internal_server_error() throws Exception {
+    @DisplayName("should return 404 when the list is empty")
+    void should_return_not_found_when_list_is_empty() throws Exception {
         // Given
-        final String errorMsg = "Error loading Pokémon list: ";
-        final RankingResponseDto expectedResponse = new RankingResponseDto(null, null, null, null, errorMsg);
+        final ErrorResponseDto errorResponse = new ErrorResponseDto(
+                "2025-08-04T20:26:52.691496400Z",
+                404,
+                "Not Found",
+                "Pokémon list is empty try loading the Pokemon list first",
+                "/pokemon/ranking"
+        );
+        Mockito.when(pokemonStorage.retrievePokemonList()).thenReturn(new ArrayList<>());
 
-        Mockito.when(pokemonService.getAllPokemon()).thenThrow(new RuntimeException("error"));
-
-        // When/Then
-        mockMvc.perform(get("/pokemon/ranking")
+        // When
+        String responseJson = mockMvc.perform(get("/pokemon/ranking")
                         .param("statType", "height")
                         .param("offset", "0")
                         .param("limit", "10")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().json(objectMapper.writeValueAsString(expectedResponse)));
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Then
+        var node = objectMapper.readTree(responseJson);
+        assertEquals(errorResponse.path(), node.get("path").asText());
+        assertEquals(errorResponse.status(), node.get("status").asInt());
+        assertEquals(errorResponse.error(), node.get("error").asText());
+        assertEquals(errorResponse.message(), node.get("message").asText());
+        assertDoesNotThrow(() -> java.time.Instant.parse(node.get("timestamp").asText()));
     }
 }

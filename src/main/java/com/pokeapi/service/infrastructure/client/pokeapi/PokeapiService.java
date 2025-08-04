@@ -1,19 +1,19 @@
-package com.pokeapi.service.infrastructure.client;
+package com.pokeapi.service.infrastructure.client.pokeapi;
 
 import com.pokeapi.service.domain.model.Pokemon;
-import com.pokeapi.service.domain.service.PokemonService;
-import com.pokeapi.service.infrastructure.client.model.GetAllPokemonResponse;
-import com.pokeapi.service.infrastructure.client.model.GetPokemonResponse;
-import com.pokeapi.service.infrastructure.client.model.ResultItem;
+import com.pokeapi.service.domain.service.PokemonFetcher;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.GetAllPokemonResponse;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.GetPokemonResponse;
+import com.pokeapi.service.infrastructure.client.pokeapi.model.ResultItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -24,10 +24,13 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PokeapiService implements PokemonService {
+public class PokeapiService implements PokemonFetcher {
 
     @Value("${pokeapi.client.max-pokemon-limit:5}")
     private int maxPokemonLimit;
+
+    @Value("${pokeapi.client.pause-delay:1000}")
+    private int pauseDelay;
 
     private final WebClient pokeapiClient;
     private final PokeapiMapper pokeapiMapper;
@@ -38,15 +41,22 @@ public class PokeapiService implements PokemonService {
      * @return a list of Pokémon
      */
     @Override
-    public List<Pokemon> getAllPokemon() {
+    public List<String> getAllPokemonIds() {
+        log.info("Start fetching Pokémon IDs");
         return fetchAllPokemon()
                 .map(GetAllPokemonResponse::results)
                 .flatMapMany(Flux::fromIterable)
                 .map(ResultItem::url)
-                .map(url -> url.replaceAll(".*/pokemon", "/pokemon"))
-                .flatMap(this::fetchPokemonByUriPath)
-                .map(pokeapiMapper::toPokemon)
+                .map(url -> url.replaceAll(".*/pokemon", "").replaceAll("/", ""))
                 .collectList()
+                .block();
+    }
+
+    @Override
+    public Pokemon getPokemonById(String pokemonId) {
+        log.info("Fetching Pokémon by ID: {}", pokemonId);
+        return fetchPokemonByUriPath("/pokemon/" + pokemonId)
+                .map(pokeapiMapper::toPokemon)
                 .block();
     }
 
@@ -57,11 +67,15 @@ public class PokeapiService implements PokemonService {
      * @return a Mono containing the response with all Pokémon
      */
     public Mono<GetAllPokemonResponse> fetchAllPokemon() {
-        log.info("Fetching all Pokémon from PokeAPI with limit {}", maxPokemonLimit);
+        log.info("Fetching Pokémon simple list from PokeAPI with limit {}", maxPokemonLimit);
         return pokeapiClient.get()
                 .uri("/pokemon?offset=0&limit={maxPokemonLimit}", maxPokemonLimit)
                 .retrieve()
-                .bodyToMono(GetAllPokemonResponse.class);
+                .bodyToMono(GetAllPokemonResponse.class)
+                .retryWhen(
+                        reactor.util.retry.Retry.backoff(3, Duration.ofSeconds(2))
+                                .doBeforeRetry(retrySignal -> log.warn("Retrying fetchAllPokemon due to error: {%s}", retrySignal.failure()))
+                );
     }
 
     /**
@@ -71,30 +85,15 @@ public class PokeapiService implements PokemonService {
      * @return a Mono containing the response with the Pokémon
      */
     public Mono<GetPokemonResponse> fetchPokemonByUriPath(String uriPath) {
-        pause();
-        log.info("Fetching Pokémon by URI path: {}", uriPath);
+        log.info("Fetching single Pokémon by URI path: {}", uriPath);
         return pokeapiClient.get()
                 .uri(uriPath)
                 .retrieve()
-                .onStatus(
-                        HttpStatusCode::isError,
-                        clientResponse -> {
-                            log.error("Error fetching Pokémon by URI path: {}", uriPath);
-                            return Mono.empty();
-                        })
-                .bodyToMono(GetPokemonResponse.class);
-    }
-
-    /**
-     * Pauses the execution for a short duration to avoid hitting the API too quickly.
-     * This is useful to respect rate limits imposed by the PokeAPI.
-     */
-    private void pause() {
-        try {
-            Thread.sleep(100); // Wait for 100 ms to avoid hitting the API too quickly
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Restore interrupted status
-        }
+                .bodyToMono(GetPokemonResponse.class)
+                .retryWhen(
+                        reactor.util.retry.Retry.backoff(3, Duration.ofSeconds(2))
+                                .doBeforeRetry(retrySignal -> log.warn("Retrying fetchPokemonByUriPath due to error: {%s}", retrySignal.failure()))
+                );
     }
 
 }

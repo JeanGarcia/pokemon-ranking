@@ -73,12 +73,12 @@ public class PokemonRankingMapper {
      */
     public PokemonDto toPokemonDto(Pokemon pokemon) {
         return new PokemonDto(
-                pokemon.id(),
-                pokemon.name(),
-                pokemon.baseExperience(),
-                pokemon.height(),
-                pokemon.weight(),
-                pokemon.spriteUrl());
+                pokemon.getId(),
+                pokemon.getName(),
+                pokemon.getBaseExperience(),
+                pokemon.getHeight(),
+                pokemon.getWeight(),
+                pokemon.getSpriteUrl());
     }
 
 }
