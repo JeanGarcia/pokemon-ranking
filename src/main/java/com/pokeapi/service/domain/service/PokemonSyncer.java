@@ -1,5 +1,7 @@
 package com.pokeapi.service.domain.service;
 
+import java.net.URI;
+
 /**
  * PokemonSyncer
  *
@@ -12,7 +14,7 @@ public interface PokemonSyncer {
      *
      * @param targetEndpoint the endpoint to use for processing the individual syncs.
      */
-    void syncAllPokemon(String targetEndpoint);
+    void syncAllPokemon(URI targetEndpoint);
 
     /**
      * Synchronizes a Pokémon with the external source.

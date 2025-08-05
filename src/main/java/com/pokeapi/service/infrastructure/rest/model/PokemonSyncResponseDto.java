@@ -6,7 +6,6 @@ package com.pokeapi.service.infrastructure.rest.model;
  * @author Jean
  */
 public record PokemonSyncResponseDto(
-        String message,
-        String error
+        String message
 ) {
 }

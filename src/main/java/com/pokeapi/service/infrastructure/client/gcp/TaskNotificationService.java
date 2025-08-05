@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -33,14 +34,14 @@ public class TaskNotificationService implements PokemonNotification {
     private String queue;
 
     @Override
-    public void sendPokemonSyncNotificationBulk(List<String> pokemonIds, String targetEndpoint) {
+    public void sendPokemonSyncNotificationBulk(List<String> pokemonIds, URI targetEndpoint) {
         try (CloudTasksClient client = CloudTasksClient.create()) {
             QueueName queueName = QueueName.of(projectId, location, queue);
 
             for (String pokemonId : pokemonIds) {
                 log.info("Sending Notification for Pokemon: {}", pokemonId);
                 HttpRequest httpRequest = HttpRequest.newBuilder()
-                        .setUrl(targetEndpoint)
+                        .setUrl(targetEndpoint.toURL().toString())
                         .setHttpMethod(HttpMethod.POST)
                         .putHeaders("Content-Type", "application/json")
                         .setBody(ByteString.copyFromUtf8("{\"pokemon_id\":\"" + pokemonId + "\"}"))

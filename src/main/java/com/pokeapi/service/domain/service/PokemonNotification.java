@@ -1,5 +1,6 @@
 package com.pokeapi.service.domain.service;
 
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -15,6 +16,6 @@ public interface PokemonNotification {
      * @param pokemonIds     all the ids to send
      * @param targetEndpoint the target endpoint.
      */
-    void sendPokemonSyncNotificationBulk(List<String> pokemonIds, String targetEndpoint);
+    void sendPokemonSyncNotificationBulk(List<String> pokemonIds, URI targetEndpoint);
 
 }
