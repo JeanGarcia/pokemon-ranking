@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.util.List;
 
@@ -52,7 +53,10 @@ public class PokemonRankingController {
                     content = {@Content(mediaType = "application/json")})
     })
     @GetMapping(value = "/ranking", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RankingResponseDto> getRanking(@Valid @ParameterObject @ModelAttribute RankingRequestDto request) {
+    public ResponseEntity<RankingResponseDto> getRanking(
+            @Valid @ParameterObject @ModelAttribute RankingRequestDto request,
+            ServerWebExchange exchange
+    ) {
         log.info("[GET-RANKING] request received: {}", request);
 
         final List<Pokemon> pokemonList = pokemonRanker.getAllPokemon();
@@ -65,8 +69,8 @@ public class PokemonRankingController {
                         request.offset(),
                         request.limit()),
                 pokemonCount,
-                controllerUtils.buildRankingNextLink(request, pokemonCount),
-                controllerUtils.buildRankingPreviousLink(request)
+                controllerUtils.buildRankingNextLink(request, pokemonCount,exchange),
+                controllerUtils.buildRankingPreviousLink(request, exchange)
         );
 
         return ResponseEntity.ok(response);

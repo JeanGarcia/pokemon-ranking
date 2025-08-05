@@ -13,8 +13,7 @@ public record RankingResponseDto(
         @JsonProperty("count") Integer count,
         @JsonProperty("next_page") String nextPage,
         @JsonProperty("previous_page") String previousPage,
-        @JsonProperty("results") List<PokemonDto> results,
-        @JsonProperty("error") String errorMessage
+        @JsonProperty("results") List<PokemonDto> results
 ) {
 
 }

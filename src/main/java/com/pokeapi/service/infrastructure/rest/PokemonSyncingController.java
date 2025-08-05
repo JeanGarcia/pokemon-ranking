@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 /**
  * PokemonSyncingController
@@ -48,12 +51,15 @@ public class PokemonSyncingController {
                     content = {@Content(mediaType = "application/json")})
     })
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PokemonSyncResponseDto> syncAll() {
+    public ResponseEntity<PokemonSyncResponseDto> syncAll(ServerWebExchange exchange) {
         log.info("[SYNCING POKEMON LIST]");
-        final String targetEndpoint = ServletUriComponentsBuilder.fromCurrentRequestUri()
-                .toUriString() + "/notification-handler";
+        final URI targetEndpoint = UriComponentsBuilder
+                .fromUri(exchange.getRequest().getURI())
+                .path("/notification-handler")
+                .build()
+                .toUri();
         pokemonLoader.syncAllPokemon(targetEndpoint);
-        return ResponseEntity.ok(new PokemonSyncResponseDto("Pokemon list is being synced", null));
+        return ResponseEntity.ok(new PokemonSyncResponseDto("Pokemon list is being synced"));
     }
 
     @Operation(
@@ -74,7 +80,7 @@ public class PokemonSyncingController {
     public ResponseEntity<PokemonSyncResponseDto> syncNotification(@RequestBody PokemonSyncRequestDto request) {
         log.info("[SYNCING POKEMON WITH ID: {}]", request.pokemonId());
         pokemonLoader.syncPokemonById(request.pokemonId());
-        return ResponseEntity.ok(new PokemonSyncResponseDto("Pokémon" + request.pokemonId() + " synced", null));
+        return ResponseEntity.ok(new PokemonSyncResponseDto("Pokémon" + request.pokemonId() + " synced"));
     }
 
 }

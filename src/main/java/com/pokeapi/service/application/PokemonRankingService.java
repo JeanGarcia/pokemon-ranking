@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +64,7 @@ public class PokemonRankingService implements PokemonRanker, PokemonSyncer {
     }
 
     @Override
-    public void syncAllPokemon(String targetEndpoint) {
+    public void syncAllPokemon(URI targetEndpoint) {
         try {
             final List<String> pokemonIds = pokemonFetcher.getAllPokemonIds();
             final List<String> existingPokemonIds = pokemonStorage.retrievePokemonList()
